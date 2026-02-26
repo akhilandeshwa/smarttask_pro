@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:smart_task_pro/screens/auth_screen.dart';
+
 
 void main() => runApp(SmartTaskProApp());
 
@@ -6,243 +9,219 @@ class SmartTaskProApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Smart Task Pro',
+      theme: ThemeData(useMaterial3: true),
+      home: SplashScreen(),
       debugShowCheckedModeBanner: false,
-      title: 'SmartTask Pro',
-      theme: ThemeData(
-        primarySwatch: Colors.teal,
-        brightness: Brightness.light,
-      ),
-      home: TaskScreen(),
     );
   }
 }
 
-class Task {
-  String id;
-  String title;
-  bool isCompleted;
-  String category;
-  
-  Task({
-    required this.id,
-    required this.title,
-    this.isCompleted = false,
-    required this.category,
-  });
-}
-
-class TaskScreen extends StatefulWidget {
+// SPLASH SCREEN
+class SplashScreen extends StatefulWidget {
   @override
-  _TaskScreenState createState() => _TaskScreenState();
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _TaskScreenState extends State<TaskScreen> {
-  List<Task> tasks = [
-    Task(id: '1', title: 'Learn Flutter State Management', category: 'Study'),
-    Task(id: '2', title: 'Practice Typing Speed', category: 'Daily', isCompleted: true),
-    Task(id: '3', title: 'Build Portfolio App', category: 'Project'),
-  ];
-  
-  final TextEditingController _controller = TextEditingController();
-  String selectedCategory = 'Personal';
-
-  void _addTask() {
-    if (_controller.text.isNotEmpty) {
-      setState(() {
-        tasks.add(Task(
-          id: DateTime.now().toString(),
-          title: _controller.text,
-          category: selectedCategory,
-        ));
-        _controller.clear();
-      });
-    }
-  }
-
-  void _toggleTask(String id) {
-    setState(() {
-      final taskIndex = tasks.indexWhere((task) => task.id == id);
-      tasks[taskIndex].isCompleted = !tasks[taskIndex].isCompleted;
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Timer(Duration(seconds: 3), () {
+      Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => OnboardingScreen()));
     });
   }
-
-  void _deleteTask(String id) {
-    setState(() {
-      tasks.removeWhere((task) => task.id == id);
-    });
-  }
-
-  List<Task> get _completedTasks => tasks.where((t) => t.isCompleted).toList();
-  List<Task> get _pendingTasks => tasks.where((t) => !t.isCompleted).toList();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: Text('SmartTask Pro', style: TextStyle(fontWeight: FontWeight.bold)),
-        elevation: 0,
-        actions: [
-          Chip(
-            label: Text('${tasks.length}', style: TextStyle(color: Colors.white)),
-            backgroundColor: Colors.orange,
-          ),
-          SizedBox(width: 16),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Stats Cards
-          Container(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              children: [
-                _buildStatCard('Pending', '${_pendingTasks.length}', Colors.orange),
-                SizedBox(width: 12),
-                _buildStatCard('Done', '${_completedTasks.length}', Colors.green),
-              ],
-            ),
-          ),
-          
-          // Add Task Form
-          Container(
-            margin: EdgeInsets.all(16),
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
-            ),
-            child: Column(
-              children: [
-                // NEW - Replace with this:
-SingleChildScrollView(
-  scrollDirection: Axis.horizontal,
-  child: Row(
-    children: [
-      SizedBox(
-        width: 200, // Fixed width for smaller screens
-        child: TextField(
-          controller: _controller,
-          decoration: InputDecoration(
-            hintText: 'What needs to be done?',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            prefixIcon: Icon(Icons.add, color: Colors.teal),
-          ),
-          onSubmitted: (_) => _addTask(),
-        ),
-      ),
-      SizedBox(width: 12),
-      ElevatedButton(
-        onPressed: _addTask,
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-        child: Icon(Icons.arrow_forward, color: Colors.white),
-      ),
-    ],
-  ),
-),
-
-                SizedBox(height: 12),
-               // NEW:
-SingleChildScrollView(
-  scrollDirection: Axis.horizontal,
-  child: Row(
-    children: ['Personal', 'Work', 'Study', 'Daily']
-        .map((cat) => Padding(
-                padding: EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(cat),
-                  selected: selectedCategory == cat,
-                  onSelected: (selected) => setState(() {
-                    selectedCategory = cat;
-                  }),
-                  selectedColor: Colors.teal[100],
-                ),
-              ))
-        .toList(),
-  ),
-),
-
-              ],
-            ),
-          ),
-
-          // Tasks List
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              itemCount: tasks.length,
-              itemBuilder: (context, index) {
-                final task = tasks[index];
-                return Dismissible(
-                  key: Key(task.id),
-                  onDismissed: (_) => _deleteTask(task.id),
-                  background: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: EdgeInsets.only(right: 20),
-                    child: Icon(Icons.delete, color: Colors.white),
-                  ),
-                  child: Card(
-                    margin: EdgeInsets.only(bottom: 12),
-                    elevation: 3,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    child: ListTile(
-                      contentPadding: EdgeInsets.all(16),
-                      leading: Checkbox(
-                        value: task.isCompleted,
-                        onChanged: (_) => _toggleTask(task.id),
-                        activeColor: Colors.teal,
-                      ),
-                      title: Text(
-                        task.title,
-                        style: TextStyle(
-                          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                          fontWeight: task.isCompleted ? FontWeight.normal : FontWeight.w500,
-                        ),
-                      ),
-                      subtitle: Chip(
-                        label: Text(task.category),
-                        backgroundColor: _getCategoryColor(task.category),
-                      ),
-                      trailing: task.isCompleted
-                          ? Icon(Icons.check_circle, color: Colors.green)
-                          : null,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String label, String count, Color color) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
+      backgroundColor: Color(0xFFE91E63),
+      body: Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-            Text(count, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
+            Icon(Icons.agriculture, size: 120, color: Colors.white),
+            SizedBox(height: 20),
+            Text('Smart Task Pro', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white)),
+            SizedBox(height: 10),
+            Text('Farm to Table', style: TextStyle(fontSize: 18, color: Colors.white70)),
           ],
         ),
       ),
     );
   }
+}
 
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'Work': return Colors.blue;
-      case 'Study': return Colors.purple;
-      case 'Daily': return Colors.orange;
-      default: return Colors.teal;
+// ONBOARDING SCREEN (Quality → Convenient → Local)
+class OnboardingScreen extends StatefulWidget {
+  @override
+  _OnboardingScreenState createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  final PageController _controller = PageController();
+  int currentIndex = 0;
+
+  final List<Map<String, dynamic>> pages = [
+    {
+      'title': 'Quality',
+      'desc': 'Sell your farm fresh products directly to consumers, cutting out the middleman and reducing emissions of the global supply chain.',
+      'color': Color(0xFF4CAF50),
+      'image': 'assets/quality.png'
+    },
+    {
+      'title': 'Convenient',
+      'desc': 'Our team of delivery drivers will make sure your orders are picked up on time and promptly delivered to your customers.',
+      'color': Color(0xFFFF9800),
+      'image': 'assets/convenient.png'
+    },
+    {
+      'title': 'Local',
+      'desc': 'We love the earth and know you do too! Join us in reducing our local carbon footprint one order at a time.',
+      'color': Color(0xFFFFC107),
+      'image': 'assets/local.png'
     }
+  ];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: PageView.builder(
+        controller: _controller,
+        onPageChanged: (index) => setState(() => currentIndex = index),
+        itemCount: 3,
+        itemBuilder: (context, index) {
+          final page = pages[index];
+          return Stack(
+            children: [
+              // BACKGROUND PNG
+              Positioned.fill(
+                child: Image.asset(
+                  page['image'],
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [page['color'], page['color'].withOpacity(0.6)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // BOTTOM CARD
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  width: double.infinity,
+                  margin: EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  padding: EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(32),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 40,
+                        offset: Offset(0, 20),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Progress Dots
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(3, (i) => Container(
+                          width: currentIndex == i ? 12 : 8,
+                          height: 8,
+                          margin: EdgeInsets.symmetric(horizontal: 6),
+                          decoration: BoxDecoration(
+                            color: currentIndex == i ? Colors.black87 : Colors.grey[300],
+                            shape: BoxShape.circle,
+                          ),
+                        )),
+                      ),
+                      SizedBox(height: 50),
+                      // Title
+                      Text(
+                        page['title'],
+                        style: TextStyle(fontSize: 44, fontWeight: FontWeight.w800, color: Colors.black87),
+                      ),
+                      SizedBox(height: 24),
+                      // Description
+                      Text(
+                        page['desc'],
+                        style: TextStyle(fontSize: 18, height: 1.5, color: Colors.black54),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 48),
+                      // Main Button
+                      Container(
+                        width: double.infinity,
+                        height: 68,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [page['color'], page['color'].withOpacity(0.8)]),
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [BoxShadow(color: page['color'].withOpacity(0.3), blurRadius: 24, offset: Offset(0, 12))],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(24),
+                            onTap: () {
+                              if (currentIndex == 2) {
+                                Navigator.push(
+                                  context, 
+                                  MaterialPageRoute(builder: (context) => LoginRegisterScreen())
+                                );
+                              } else {
+                                _controller.nextPage(
+                                  duration: Duration(milliseconds: 500),
+                                  curve: Curves.easeInOutCubic,
+                                );
+                              }
+                            },
+                            child: Center(
+                              child: Text(
+                                'Join the movement!',
+                                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      // Login Button
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context, 
+                            MaterialPageRoute(builder: (context) => LoginRegisterScreen())
+                          );
+                        },
+                        child: Text(
+                          'Login',
+                          style: TextStyle(fontSize: 18, color: page['color'], fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 }
